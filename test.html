@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PPT Slides – Static Slider</title>
+  <style>
+    :root {
+      --bg: #111;
+      --btn-bg: rgba(0,0,0,.45);
+      --btn-fg: #fff;
+      --dot: rgba(255,255,255,.4);
+      --dot-active: #fff;
+      --shadow: 0 8px 30px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { background: var(--bg); color: #fff; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+
+    .slider {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .slides {
+      display: flex;
+      height: 100%;
+      transition: transform .5s ease;
+      will-change: transform;
+    }
+
+    .slide {
+      flex: 0 0 100%;
+      position: relative;
+      height: 100%;
+    }
+
+    /* Slide content layout */
+    .content {
+      position: absolute;
+      inset: 0;
+      margin: 0 auto;
+      padding: 4vw 6vw;
+      width: min(1200px, 100%);
+      display: grid;
+      align-content: center;
+      gap: 28px;
+      background: #0c0c0c; /* subtle to match deck tone */
+    }
+    .card {
+      background: #0f0f0f;
+      border-radius: 14px;
+      padding: 20px 22px;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .title { font-size: clamp(28px, 5vw, 56px); font-weight: 800; letter-spacing: .5px; }
+    .subtitle { font-size: clamp(16px, 2.2vw, 24px); opacity: .85; }
+    .quote { font-size: clamp(20px, 3vw, 32px); font-style: italic; opacity: .95; }
+    .quote.callout { padding: 12px 16px; border-left: 4px solid #28d7a2; background: rgba(255,255,255,.06); border-radius: 8px; }
+    .bullets { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+    .bullets li { display: grid; grid-template-columns: 36px 1fr; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px dashed rgba(255,255,255,.18); }
+    .bullets img { width: 32px; height: 32px; object-fit: contain; background: #1a1a1a; border-radius: 8px; }
+    .grid { display: grid; gap: 16px; }
+    .grid.cols-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid.cols-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .grid.cols-4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+    .grid.cols-5 { grid-template-columns: repeat(5, minmax(0,1fr)); }
+    .kicker { text-transform: uppercase; letter-spacing: .18em; font-weight: 700; opacity: .8; font-size: 12px; }
+    .big { font-size: clamp(44px, 10vw, 120px); font-weight: 900; line-height: .95; }
+    .muted { opacity: .8; }
+    .note { font-size: 14px; opacity: .75; }
+    .table { display: grid; grid-template-columns: 280px 1fr; gap: 8px; }
+    .row { display: contents; }
+    .cell { padding: 10px 12px; border-bottom: 1px dashed rgba(255,255,255,.18); }
+    .badge { display:inline-block; padding:2px 8px; border-radius: 999px; background: #135; font-size:12px; opacity:.9; }
+    .placeholder { width: 100%; height: 220px; border-radius: 12px; background: #121212; border:1px dashed rgba(255,255,255,.25); display:grid; place-items:center; color:#aaa; }
+    /* Agenda numbered list */
+    .agenda { counter-reset: item; display: grid; gap: 12px; padding: 0; margin: 0; }
+    .agenda li { list-style: none; display: grid; grid-template-columns: 36px 1fr; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px dashed rgba(255,255,255,.18); }
+    .agenda li::before { counter-increment: item; content: counter(item); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: #174b7a; font-weight: 800; }
+    /* Emphasis for PCMI cards: bigger titles, smaller descriptions */
+    .pcmi .kicker { font-size: clamp(18px, 2.6vw, 28px); letter-spacing: .12em; font-weight: 900; opacity: 1; color: #28d7a2; margin-bottom: 6px; display: block; line-height: 1.15; overflow-wrap: anywhere; word-break: break-word; }
+    .pcmi .subtitle { font-size: clamp(14px, 1.8vw, 18px); opacity: .9; }
+    /* Top chrome (brand + logo) */
+    .chrome { position: absolute; top: 12px; left: 16px; right: 16px; display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+    .chrome-brand { font-weight: 900; letter-spacing: .06em; line-height: .9; font-size: clamp(14px, 2vw, 22px); opacity: .9; text-align: left; }
+    .chrome-logo { height: 28px; width: auto; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+    @media (max-width: 900px) {
+      .grid.cols-4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .grid.cols-5 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .table { grid-template-columns: 1fr; }
+    }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 0;
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      width: 48px; height: 48px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: grid; place-items: center;
+      backdrop-filter: blur(4px);
+      box-shadow: var(--shadow);
+      transition: background .2s ease, transform .2s ease;
+      z-index: 10;
+    }
+    .nav-btn:hover { background: rgba(0,0,0,.6); transform: translateY(-50%) scale(1.05); }
+    .nav-btn:active { transform: translateY(-50%) scale(0.98); }
+    .nav-prev { left: 12px; }
+    .nav-next { right: 12px; }
+
+    .dots {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 14px;
+      display: flex; gap: 8px; flex-wrap: wrap;
+      z-index: 10;
+      padding: 6px 10px;
+      background: rgba(0,0,0,.25);
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+      box-shadow: var(--shadow);
+    }
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: var(--dot);
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+    }
+    .dot[aria-current="true"] { background: var(--dot-active); }
+
+    .sr-only {
+      position: absolute !important;
+      height: 1px; width: 1px;
+      overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
+      white-space: nowrap; border: 0; padding: 0; margin: -1px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Inline SVG symbol set for placeholder icons -->
+  <svg aria-hidden="true" style="position:absolute; width:0; height:0; overflow:hidden">
+    <defs>
+      <symbol id="icon-survey" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3h10a2 2 0 0 1 2 2v14l-4-2l-4 2V5a2 2 0 0 0-2-2Z" opacity=".3"/><path fill="currentColor" d="M7 3h6a2 2 0 0 1 2 2v14l-4-2l-4 2V5a2 2 0 0 1 2-2Zm1 4h6v2H8V7Zm0 4h6v2H8v-2Zm0 4h4v2H8v-2Z"/></symbol>
+      <symbol id="icon-faq" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9a9 9 0 0 0-9-9Zm0 14a1 1 0 1 1 1-1a1 1 0 0 1-1 1Zm1-4h-2a4 4 0 1 1 4-4h-2a2 2 0 1 0-2 2a2 2 0 0 1 2 2Z"/></symbol>
+      <symbol id="icon-success" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm-1 14l-4-4l1.41-1.41L11 12.17l5.59-5.58L18 8Z"/></symbol>
+      <symbol id="icon-analytics" viewBox="0 0 24 24"><path fill="currentColor" d="M3 21V3h2v16h16v2H3Zm4-4V9h2v8H7Zm4 0V5h2v12h-2Zm4 0v-6h2v6h-2Z"/></symbol>
+      <symbol id="icon-ab" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z" opacity=".3"/><path fill="currentColor" d="M6.5 8.5L8 6l1.5 2.5h-3ZM15 8h4v1h-4V8Zm0 8h4v1h-4v-1ZM7 17h3v1H7v-1Z"/></symbol>
+      <symbol id="icon-warning" viewBox="0 0 24 24"><path fill="currentColor" d="M1 21h22L12 2L1 21Zm12-3h-2v-2h2v2Zm0-4h-2V9h2v5Z"/></symbol>
+      <symbol id="icon-bug" viewBox="0 0 24 24"><path fill="currentColor" d="M20 8h-2.09A6 6 0 0 0 13 5.1V4h-2v1.1A6 6 0 0 0 6.09 8H4v2h2v2H4v2h2a6 6 0 0 0 12 0h2v-2h-2v-2h2V8Zm-8 8a4 4 0 0 1-4-4h8a4 4 0 0 1-4 4Z"/></symbol>
+      <symbol id="icon-onboarding" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a5 5 0 1 0-5-5a5 5 0 0 0 5 5Zm-9 9a9 9 0 1 1 18 0H3Z"/></symbol>
+      <symbol id="icon-rollback" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5V1L6 7l6 6V9a5 5 0 1 1-5 5H5a7 7 0 1 0 7-9Z"/></symbol>
+      <symbol id="icon-target" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10h-2A8 8 0 1 1 12 4V2Zm0 4a6 6 0 1 0 6 6h-2a4 4 0 1 1-4-4V6Zm0 4a2 2 0 1 0 2 2h-2V10Z"/></symbol>
+      <symbol id="icon-align" viewBox="0 0 24 24"><path fill="currentColor" d="M3 4h18v2H3V4Zm4 4h10v2H7V8Zm-4 4h18v2H3v-2Zm4 4h10v2H7v-2Z"/></symbol>
+      <symbol id="icon-growth" viewBox="0 0 24 24"><path fill="currentColor" d="M3 21v-2h18v2H3Zm2-4v-5l4 2l4-6l6 4v5H5Z"/></symbol>
+      <symbol id="icon-roadmap" viewBox="0 0 24 24"><path fill="currentColor" d="M6 3h12l-2 6l2 6H6l2-6l-2-6Zm2 2l1 4l-1 4h8l-1-4l1-4H8Z"/></symbol>
+      <symbol id="icon-gauge" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20a8 8 0 1 1 8-8h-2a6 6 0 1 0-6 6v2Zm-1-7.73l5.66-5.66l1.41 1.41L12.7 13.7A2 2 0 1 1 11 12.27Z"/></symbol>
+      <symbol id="icon-truck" viewBox="0 0 24 24"><path fill="currentColor" d="M3 6h11v8H3V6Zm11 0h4l3 3v5h-7V6ZM6 19a2 2 0 1 1 0-4a2 2 0 0 1 0 4Zm10 0a2 2 0 1 1 0-4a2 2 0 0 1 0 4Z"/></symbol>
+      <symbol id="icon-factory" viewBox="0 0 24 24"><path fill="currentColor" d="M3 21V10l6 3V9l6 3V8l6 3v10H3Z"/></symbol>
+      <symbol id="icon-pressure" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2v8l3 3l-3 3v6l8-9l-8-9Zm-9 9h8v2H3v-2Z"/></symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24"><path fill="currentColor" d="M10 2a8 8 0 1 1-5.29 14L2 18.41L3.41 20l2.71-2.71A8 8 0 0 1 10 2Zm0 2a6 6 0 1 0 0 12a6 6 0 0 0 0-12Z"/></symbol>
+      <symbol id="icon-layers" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l10 6l-10 6L2 8l10-6Zm0 8l10 6l-10 6l-10-6l10-6Z"/></symbol>
+      <symbol id="icon-thanks" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21l-1.45-1.32C6.4 15.36 4 13.28 4 10.5A3.5 3.5 0 0 1 7.5 7c1.54 0 3.04.99 3.57 2.36h1.86C13.46 7.99 14.96 7 16.5 7A3.5 3.5 0 0 1 20 10.5c0 2.78-2.4 4.86-6.55 9.18L12 21Z"/></symbol>
+      <symbol id="icon-megaphone" viewBox="0 0 24 24"><path fill="currentColor" d="M2 10h3l10-4v12l-10-4H2v-4Zm5 6h2l1 4H7l0-4Z"/></symbol>
+      <symbol id="icon-megaphone-off" viewBox="0 0 24 24"><path fill="currentColor" d="m2 3l19 19l-1.5 1.5L17 21l-2-.8V8.82L6.82 13H2v-2h3l3.18-1.27L.5 4.5L2 3ZM15 5l5-2v14l-2-2V6.73L15 8V5Z"/></symbol>
+    </defs>
+  </svg>
+  <main class="slider" aria-roledescription="carousel" aria-label="Slide deck" tabindex="0">
+    <div class="slides" id="slides">
+      <!-- Slide 1: Gathering Data -->
+      <section class="slide" style="order:15;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">GATHERING DATA</div>
+          <div class="subtitle">Collect feedback systematically</div>
+          <ul class="bullets">
+            <li><svg class="icon" width="32" height="32"><use href="#icon-survey"/></svg><span>In‑app surveys (e.g., “was this helpful”)</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-faq"/></svg><span>Support tickets and FAQs</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-success"/></svg><span>Customer success and sales feedback</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-analytics"/></svg><span>User behaviour analysis via analytical tools (<span class="badge">GA4</span>, Heap, Amplitude, Mixpanel, Fullstory, Hotjar, etc.)</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-ab"/></svg><span>A/B Testing</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Slide 2: The Last Mile quote -->
+      <section class="slide" style="order:17;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">The Last Mile</div>
+          <div class="quote">“It's not about launch day. It's about every day after.”</div>
+        </div>
+      </section>
+
+      <!-- Slide 3: Beyond Delivery -->
+      <section class="slide" style="order:1;">
+        <div class="content">
+          <div class="big">BEYOND<br/>DELIVERY</div>
+          <div class="subtitle">Leading teams through the last mile</div>
+        </div>
+      </section>
+
+      <!-- Slide 4: Rollout & Launch quote -->
+      <section class="slide" style="order:11;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">Rollout & Launch</div>
+          <div class="quote">“Launch is an event; Rollout is a strategy.”</div>
+        </div>
+      </section>
+
+      <!-- Slide 5: Closing Thoughts -->
+      <section class="slide" style="order:20;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">CLOSING THOUGHTS</div>
+          <div class="grid cols-4">
+            <div class="card">Shift mindset from output to outcome — emphasize adoption over just deployment.</div>
+            <div class="card">Encourage cross‑functional collaboration — align Engineering, Product, Support, and Marketing.</div>
+            <div class="card">Build a feedback loop culture — promote learning and iteration post‑launch.</div>
+            <div class="card">Drive accountability across the lifecycle — establish ownership for post‑launch success.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 6: Framework for Landing PCMI -->
+      <section class="slide" style="order:19;">
+        <div class="content pcmi">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">FRAMEWORK FOR LANDING</div>
+          <div class="grid cols-4">
+            <div class="card"><div class="kicker">PLAN</div><div class="subtitle">Early Planning</div></div>
+            <div class="card"><div class="kicker">COMMUNICATE</div><div class="subtitle">Release notes, enablement decks, demos</div></div>
+            <div class="card"><div class="kicker">MEASURE</div><div class="subtitle">Define success metrics</div></div>
+            <div class="card"><div class="kicker">ITERATE</div><div class="subtitle">Collect usage data and feedback</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 7: Feedback Loop quote -->
+      <section class="slide" style="order:14;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">Feedback Loop</div>
+          <div class="quote">“listen, learn, adapt.”</div>
+        </div>
+      </section>
+
+      <!-- Slide 8: You are in a build trap if you... -->
+      <section class="slide" style="order:5;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">YOU ARE IN A BUILD TRAP IF YOU</div>
+          <ul class="bullets">
+            <li><svg class="icon" width="32" height="32"><use href="#icon-warning"/></svg><span>Focus on output, not outcomes</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-warning"/></svg><span>Ship features without validating value</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-warning"/></svg><span>Judge teams by speed, not impact</span></li>
+          </ul>
+          <div class="quote callout">The Delivery Myth — “We shipped it, so it's done.”</div>
+        </div>
+      </section>
+
+      <!-- Slide 9: Feedback loops / iterations -->
+      <section class="slide" style="order:16;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">FEEDBACK LOOPS / ITERATIONS</div>
+          <div class="subtitle">Analyse & prioritise → based on impact and feasibility</div>
+          <ul class="bullets">
+            <li><svg class="icon" width="32" height="32"><use href="#icon-survey"/></svg><span>Tweaks in UX or messaging</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-bug"/></svg><span>Fix edge cases or bugs</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-onboarding"/></svg><span>Improve onboarding flows (e.g., if 80% click “Start” but only 10% finish, investigate friction)</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-rollback"/></svg><span>Consider rolling back or sunsetting features if needed</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Slide 10: North Star Metric quote -->
+      <section class="slide" style="order:8;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">North Star Metric</div>
+          <div class="quote">“If your roadmap is a compass, your North Star is the purpose.”</div>
+        </div>
+      </section>
+
+      <!-- Slide 11: Types of Rollout Strategies -->
+      <section class="slide" style="order:12;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">TYPES OF ROLLOUT STRATEGIES</div>
+          <div class="table">
+            <div class="row"><div class="cell">Big Bang Launch</div><div class="cell muted">All users get the feature at once — high risk, high visibility</div></div>
+            <div class="row"><div class="cell">Phased Rollout</div><div class="cell muted">Release to a % of users gradually; monitor metrics, expand</div></div>
+            <div class="row"><div class="cell">Beta Testing</div><div class="cell muted">Early access to a select user group to gather feedback</div></div>
+            <div class="row"><div class="cell">Dark Launch</div><div class="cell muted">Feature deployed but hidden; test performance & load</div></div>
+            <div class="row"><div class="cell">A/B Testing</div><div class="cell muted">Different versions to users; compare impact on key metrics</div></div>
+            <div class="row"><div class="cell">Feature Flags</div><div class="cell muted">Toggle feature on/off dynamically for rollbacks or staged release</div></div>
+          </div>
+          <div class="quote callout">“ship fast, test safe, recover faster”</div>
+        </div>
+      </section>
+
+      <!-- Slide 12: The North Star Metric explained -->
+      <section class="slide" style="order:9;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">THE NORTH STAR METRIC</div>
+          <div class="quote callout">The one key metric that best captures the core value your product delivers to customers</div>
+          <ul class="bullets">
+            <li><svg class="icon" width="32" height="32"><use href="#icon-target"/></svg><span>Keep teams focused on delivering value, not vanity.</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-align"/></svg><span>Align cross‑functional efforts (Engineering, Product, Support, GTM).</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-growth"/></svg><span>Drive sustainable and measurable product growth.</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Slide 13: Discovery vs Delivery quote -->
+      <section class="slide" style="order:6;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">Discovery vs Delivery</div>
+          <div class="quote">“Build the <b>right</b> thing. Build the thing <b>right</b>.”</div>
+        </div>
+      </section>
+
+      <!-- Slide 14: The Build Trap quote -->
+      <section class="slide" style="order:3;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">The Build Trap</div>
+          <div class="quote">“Shipping features is easy. Delivering value is the real product.”</div>
+        </div>
+      </section>
+
+      <!-- Slide 15: Value >> Usage -->
+      <section class="slide" style="order:10;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">VALUE >>> USAGE</div>
+          <div class="grid cols-2">
+            <div class="card">
+              <div class="kicker">Vanity metrics (looks good)</div>
+              <ul class="bullets">
+                <li><svg class="icon" width="32" height="32"><use href="#icon-align"/></svg><span>Number of registered users</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-align"/></svg><span>Total signups</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-analytics"/></svg><span>Pageviews</span></li>
+              </ul>
+            </div>
+            <div class="card">
+              <div class="kicker">North Star metric (means good)</div>
+              <ul class="bullets">
+                <li><svg class="icon" width="32" height="32"><use href="#icon-target"/></svg><span>Users who complete a core workflow weekly</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-gauge"/></svg><span>Hours watched per active user per week</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-growth"/></svg><span>Returning readers reading 3+ articles weekly</span></li>
+              </ul>
+              <div class="note">Examples: purchases per month, nights booked, DAU, time spent listening</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 16: Build Trap symptoms & causes -->
+      <section class="slide" style="order:4;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">BUILD TRAP</div>
+          <div class="grid cols-2">
+            <div class="card">
+              <div class="kicker">Symptoms</div>
+              <ul class="bullets">
+                <li><svg class="icon" width="32" height="32"><use href="#icon-roadmap"/></svg><span>Endless roadmaps of features</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-gauge"/></svg><span>No measurement post‑launch</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-truck"/></svg><span>Success = shipped, not used</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-factory"/></svg><span>Product = feature factory</span></li>
+              </ul>
+            </div>
+            <div class="card">
+              <div class="kicker">Causes</div>
+              <ul class="bullets">
+                <li><svg class="icon" width="32" height="32"><use href="#icon-pressure"/></svg><span>Organizational pressure to “do more”</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-search"/></svg><span>Lack of discovery process</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-target"/></svg><span>Misaligned incentives</span></li>
+                <li><svg class="icon" width="32" height="32"><use href="#icon-layers"/></svg><span>Project mindset over product mindset</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 17: Thank you -->
+      <section class="slide" style="order:21;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="quote">“It’s relay, not a sprint.”</div>
+          <div class="big">THANK YOU</div>
+        </div>
+      </section>
+
+      <!-- Slide 18: Discovery vs Delivery diagram placeholder -->
+      <section class="slide" style="order:7;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">DISCOVERY VS DELIVERY</div>
+          <div class="placeholder">/images/slide-18/diagram.png</div>
+          <div class="quote callout">Landing adds a third dimension: Are people using it and gaining value from it?</div>
+        </div>
+      </section>
+
+      <!-- Slide 19: Common Launch Pitfalls -->
+      <section class="slide" style="order:13;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">COMMON LAUNCH PITFALLS</div>
+          <ul class="bullets">
+            <li><svg class="icon" width="32" height="32"><use href="#icon-roadmap"/></svg><span>Ignoring rollout strategy</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-onboarding"/></svg><span>Lack of onboarding or adoption strategy</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-analytics"/></svg><span>Lacking instrumentation for analytics</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-megaphone"/></svg><span>Poor internal comms, documentation & customer success enablement</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-gauge"/></svg><span>Poor or missing metrics</span></li>
+            <li><svg class="icon" width="32" height="32"><use href="#icon-megaphone-off"/></svg><span>Silent launches with no GTM strategy</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Slide 20: Agenda -->
+      <section class="slide" style="order:2;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">AGENDA</div>
+          <ol class="agenda">
+            <li>The Build Trap</li>
+            <li>Discovery vs Delivery</li>
+            <li>North Star Metric</li>
+            <li>Rollout & Launch</li>
+            <li>Feedback Loops</li>
+            <li>The Last Mile</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Slide 21: The Last Mile - What it looks like -->
+      <section class="slide" style="order:18;">
+        <div class="content">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+          <div class="title">THE LAST MILE — WHAT IT LOOKS LIKE</div>
+          <div class="grid cols-5">
+            <div class="card"><b>User Onboarding</b><br/>Craft intuitive flows, tooltips, or guided tours that help users discover and understand the new feature. Ensure the value is obvious.</div>
+            <div class="card"><b>Internal Stakeholder Awareness</b><br/>Everyone should know what's launching, why it matters, and how it helps users. Alignment prevents miscommunication and builds momentum.</div>
+            <div class="card"><b>Metrics Tracking & Feedback Loop</b><br/>Define success signals before launch and set up dashboards to monitor them. Use qualitative and quantitative feedback to learn, adapt, and iterate.</div>
+            <div class="card"><b>Communication & Documentation</b><br/>Craft clear internal and external messaging: changelogs, release notes, support articles, and enablement decks.</div>
+            <div class="card"><b>Support Enablement</b><br/>Equip frontline teams with FAQs, escalation paths, and product narratives. A confident support team = smoother user experience.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <button class="nav-btn nav-prev" aria-label="Previous slide" id="prevBtn">‹</button>
+    <button class="nav-btn nav-next" aria-label="Next slide" id="nextBtn">›</button>
+
+    <div class="dots" id="dots" aria-label="Slide navigation"></div>
+
+    <p class="sr-only" id="srStatus" aria-live="polite"></p>
+  </main>
+
+  <script>
+    (function () {
+      const slidesEl = document.getElementById('slides');
+      const slideEls = Array.from(slidesEl.children);
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const dotsEl  = document.getElementById('dots');
+      const sr      = document.getElementById('srStatus');
+
+      let index = 0;
+      let autoplayTimer = null;
+      const AUTOPLAY_MS = 0; // manual only
+
+      // create dots
+      slideEls.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.className = 'dot';
+        b.type = 'button';
+        b.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+        b.addEventListener('click', () => goTo(i));
+        dotsEl.appendChild(b);
+      });
+
+      function update() {
+        slidesEl.style.transform = `translateX(${index * -100}%)`;
+        Array.from(dotsEl.children).forEach((d, i) =>
+          d.setAttribute('aria-current', String(i === index))
+        );
+        sr.textContent = `Slide ${index + 1} of ${slideEls.length}`;
+      }
+
+      function goTo(i) {
+        index = (i + slideEls.length) % slideEls.length;
+        update();
+        restartAutoplay();
+      }
+
+      function next() { goTo(index + 1); }
+      function prev() { goTo(index - 1); }
+
+      prevBtn.addEventListener('click', prev);
+      nextBtn.addEventListener('click', next);
+
+      // Keyboard
+      document.querySelector('.slider').addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') next();
+        else if (e.key === 'ArrowLeft') prev();
+        else if (e.key === 'Home') goTo(0);
+        else if (e.key === 'End') goTo(slideEls.length - 1);
+      });
+
+      // Touch / swipe
+      let startX = 0, dx = 0, touching = false;
+      slidesEl.addEventListener('touchstart', (e) => {
+        touching = true;
+        startX = e.touches[0].clientX;
+        stopAutoplay();
+      }, { passive: true });
+      slidesEl.addEventListener('touchmove', (e) => {
+        if (!touching) return;
+        dx = e.touches[0].clientX - startX;
+      }, { passive: true });
+      slidesEl.addEventListener('touchend', () => {
+        touching = false;
+        if (Math.abs(dx) > 40) (dx < 0 ? next() : prev());
+        dx = 0;
+        restartAutoplay();
+      });
+
+      // Autoplay with pause-on-hover
+      function startAutoplay() {
+        if (AUTOPLAY_MS > 0 && !autoplayTimer) {
+          autoplayTimer = setInterval(next, AUTOPLAY_MS);
+        }
+      }
+      function stopAutoplay() {
+        if (autoplayTimer) {
+          clearInterval(autoplayTimer);
+          autoplayTimer = null;
+        }
+      }
+      function restartAutoplay() { stopAutoplay(); startAutoplay(); }
+      document.querySelector('.slider').addEventListener('mouseenter', stopAutoplay);
+      document.querySelector('.slider').addEventListener('mouseleave', startAutoplay);
+
+      // Init
+      update();
+      if (AUTOPLAY_MS > 0) startAutoplay();
+    })();
+  </script>
+</body>
+</html>
