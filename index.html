@@ -84,6 +84,8 @@
     /* Emphasis for PCMI cards: bigger titles, smaller descriptions */
     .pcmi .kicker { font-size: clamp(18px, 2.6vw, 28px); letter-spacing: .12em; font-weight: 900; opacity: 1; color: #28d7a2; margin-bottom: 6px; display: block; line-height: 1.15; overflow-wrap: anywhere; word-break: break-word; }
     .pcmi .subtitle { font-size: clamp(14px, 1.8vw, 18px); opacity: .9; }
+    .lastmile .kicker { font-size: clamp(14px, 1.8vw, 16px); letter-spacing: .12em; font-weight: 900; opacity: 1; color: #28d7a2; margin-bottom: 6px; display: block; line-height: 1.15; overflow-wrap: anywhere; word-break: break-word; }
+
     /* Top chrome (brand + logo) */
     .chrome { position: absolute; top: 12px; left: 16px; right: 16px; display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
     .chrome-brand { font-weight: 900; letter-spacing: .06em; line-height: .9; font-size: clamp(14px, 2vw, 22px); opacity: .9; text-align: left; }
@@ -450,15 +452,15 @@
 
       <!-- Slide 21: The Last Mile - What it looks like -->
       <section class="slide" style="order:18;">
-        <div class="content">
-          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="images/brand/taazaa-x.png" alt="Taazaa X"/></div>
+        <div class="content lastmile">
+          <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="/images/brand/taazaa-x.png" alt="Taazaa X"/></div>
           <div class="title">THE LAST MILE — WHAT IT LOOKS LIKE</div>
           <div class="grid cols-5">
-            <div class="card"><b>User Onboarding</b><br/>Craft intuitive flows, tooltips, or guided tours that help users discover and understand the new feature. Ensure the value is obvious.</div>
-            <div class="card"><b>Internal Stakeholder Awareness</b><br/>Everyone should know what's launching, why it matters, and how it helps users. Alignment prevents miscommunication and builds momentum.</div>
-            <div class="card"><b>Metrics Tracking & Feedback Loop</b><br/>Define success signals before launch and set up dashboards to monitor them. Use qualitative and quantitative feedback to learn, adapt, and iterate.</div>
-            <div class="card"><b>Communication & Documentation</b><br/>Craft clear internal and external messaging: changelogs, release notes, support articles, and enablement decks.</div>
-            <div class="card"><b>Support Enablement</b><br/>Equip frontline teams with FAQs, escalation paths, and product narratives. A confident support team = smoother user experience.</div>
+            <div class="card"><div class="kicker">User Onboarding</div><br/>Craft intuitive flows, tooltips, or guided tours that help users discover and understand the new feature. Ensure the value is obvious.</div>
+            <div class="card"><div class="kicker">Internal Stakeholder Awareness</div><br/>Everyone should know what's launching, why it matters, and how it helps users. Alignment prevents miscommunication and builds momentum.</div>
+            <div class="card"><div class="kicker">Metrics Tracking & Feedback Loop</div><br/>Define success signals before launch and set up dashboards to monitor them. Use qualitative and quantitative feedback to learn, adapt, and iterate.</div>
+            <div class="card"><div class="kicker">Communication & Documentation</div><br/>Craft clear internal and external messaging: changelogs, release notes, support articles, and enablement decks.</div>
+            <div class="card"><div class="kicker">Support Enablement</div><br/>Equip frontline teams with FAQs, escalation paths, and product narratives. A confident support team = smoother user experience.</div>
           </div>
         </div>
       </section>
