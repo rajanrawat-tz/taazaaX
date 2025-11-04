@@ -77,6 +77,9 @@
     .cell { padding: 10px 12px; border-bottom: 1px dashed rgba(255,255,255,.18); }
     .badge { display:inline-block; padding:2px 8px; border-radius: 999px; background: #135; font-size:12px; opacity:.9; }
     .placeholder { width: 100%; height: 220px; border-radius: 12px; background: #121212; border:1px dashed rgba(255,255,255,.25); display:grid; place-items:center; color:#aaa; }
+    /* Special styling for the Discovery vs Delivery diagram */
+    .placeholder.diagram-large { height: auto; min-height: 400px; max-height: 65vh; background: transparent; border: none; padding: 20px 0; }
+    .placeholder.diagram-large img { width: 100%; height: auto; max-width: 100%; object-fit: contain; border-radius: 12px; }
     /* Agenda numbered list */
     .agenda { counter-reset: item; display: grid; gap: 12px; padding: 0; margin: 0; }
     .agenda li { list-style: none; display: grid; grid-template-columns: 36px 1fr; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px dashed rgba(255,255,255,.18); }
@@ -413,7 +416,7 @@
         <div class="content">
           <div class="chrome"><div class="chrome-brand">BEYOND<br/>DELIVERY</div><img class="chrome-logo" src="images/brand/taazaa-x.png" alt="Taazaa X"/></div>
           <div class="title">DISCOVERY VS DELIVERY</div>
-          <div class="placeholder"><img src="images/slide18.png" alt="Divergence and Convergence"/></div>
+          <div class="placeholder diagram-large"><img src="images/slide18.png" alt="Divergence and Convergence"/></div>
           <div class="quote callout">Landing adds a third dimension: Are people using it and gaining value from it?</div>
         </div>
       </section>
